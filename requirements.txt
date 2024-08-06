@@ -7,4 +7,3 @@ flask_socketio
 openpyxl
 gevent
 gevent-socketio
-json
