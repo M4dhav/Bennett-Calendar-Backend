@@ -3,4 +3,8 @@ Flask
 gunicorn
 Werkzeug
 flask_cors
+flask_socketio
 openpyxl
+gevent
+gevent-socketio
+json
