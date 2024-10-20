@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request, send_file
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 from io import BytesIO
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 import os
 import json
 
@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 
-ALLOWED_EXTENSIONS = set(['xls', ])
+ALLOWED_EXTENSIONS = set(['xls', 'xlsx' ])
 UPLOAD_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), 'Downloads'))
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1000 * 1000  # 500 MB
@@ -29,28 +29,58 @@ splelectives = {"Natural Language Processing":"CSET346", }
 electives = {"Soft Computing": "CSET326"}
       
            
-def parse(specialisation,elective, wb):
+def parse(specialisation,elective, splelec,  wb):
     elecCourse = electives[elective]
     splcourse = splcourses[specialisation]
+    splecourse = splelectives[splelec]
     ttwb = wb
     tt = ttwb.active
-    coursenames = [[],[],[],[],[]]
-    rooms = [[],[],[],[],[]]
+    
+    classes = []
     c = 0
     for i in range(2,7):
         for j in range(5,14):
-            value = tt.cell(row = j, column = i).value
-            if value == None or value == "":
-                coursenames[c].append("Free")
-                rooms[c].append("Free")
-                continue
             
-            if any(k in value for k in list(maincourses.keys())):
+            match (i-2):
+                case 0:
+                    dstart = '12'
+                case 1:
+                    dstart = '6'
+                case 2:
+                    dstart = '7'
+                case 3:
+                    dstart = '8'
+                case 4:
+                    dstart = '9'
+            match (j-5):
+                case 0:
+                    tstart = '08'
+                case 1:
+                    tstart = '09'
+                case 2:
+                    tstart = '10'
+                case 3:
+                    tstart = '11'
+                case 4:
+                    tstart = '12'
+                case 5:
+                    tstart = '13'
+                case 6:
+                    tstart = '14'
+                case 7:
+                    tstart = '15'
+                case 8:
+                    tstart = '16'
+            value = tt.cell(row = j, column = i).value
+            
+            if value == None or value == "":
+                continue
+            k = next((k for k in maincourses.keys() if k in value), None)
+            if k is not None:
                 i1 = value.index("{")
                 i2 = value.index("}")
                 room = value[i1+1:i2]
-                coursenames[c].append(value)
-                rooms[c].append(room)
+                name = maincourses[k]
             elif splcourse[0] in value:
                 i1 = value.index(splcourse[0])
                 value = value[i1:]
@@ -59,8 +89,7 @@ def parse(specialisation,elective, wb):
                 print("This is value",value)
                 i3 = value.index("{")
                 room = value[i3+1:i2]
-                rooms[c].append(room)
-                coursenames[c].append(value)
+                name = splcourse[1]
             elif elecCourse in value:
                 i1 = value.index(elecCourse)
                 value = value[i1:]
@@ -68,13 +97,26 @@ def parse(specialisation,elective, wb):
                 value = value[:i2+1]
                 i3 = value.index("{")
                 room = value[i3+1:i2]
-                rooms[c].append(room)
-                coursenames[c].append(value)
+                name = elective
+            elif splecourse in value:
+                i1 = value.index(splecourse)
+                value = value[i1:]
+                i2 = value.index("}")
+                value = value[:i2+1]
+                i3 = value.index("{")
+                room = value[i3+1:i2]
+                name = splelec
             else:
-                coursenames[c].append("Free")
-                rooms[c].append("Free")
+                continue
+            if "(L)" in value:
+                name += " Lecture"
+            elif "(T)" in value:
+                name += " Tutorial"
+            elif "(P)" in value:
+                name += " Lab"
+            classes.append({"course": value, "room": room, "name": name, "day": dstart, "time": tstart})
         c += 1
-    return coursenames, rooms
+    return classes
            
            
            
@@ -86,7 +128,7 @@ def fileUpload():
         spl = request.form['spl']
         spl_elective = request.form['spl_elective']
         elective = request.form['elective']
-        print(spl, elective, spl_elective)
+        print( "PAY ATTENTION ", spl, elective, spl_elective)
         filename = ""
         print(request.files, "....")
         for f in file:
@@ -95,15 +137,19 @@ def fileUpload():
             print(allowedFile(filename))
             if allowedFile(filename):
                 f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                x2x = XLS2XLSX(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                wb = x2x.to_xlsx()
-                coursenames, rooms = parse("AI", "Soft Computing", wb)
+                if filename.split('.')[1] == 'xlsx':
+                    wb = load_workbook(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    classes = parse(spl , elective, spl_elective,  wb)
+                else:
+                    x2x = XLS2XLSX(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    wb = x2x.to_xlsx()
+                    classes = parse(spl , elective, spl_elective,  wb)
                 
             else:
                 return jsonify({'message': 'File type not allowed'}), 400
             
 
-        return jsonify(json.dumps({'coursenames': coursenames,'rooms': rooms}))
+        return jsonify(json.dumps({'class':classes}))
         # return jsonify({"name": filename, "status": "success"})
     else:
         return jsonify({"status": "Upload API GET Request Running"})
