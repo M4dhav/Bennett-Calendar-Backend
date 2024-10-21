@@ -25,8 +25,8 @@ def allowedFile(filename):
 splcourses = {"AI":["CSET225", "Intelligent Model Design using AI"], "Cloud Computing":["CSET232", "Design of Cloud Architectural Solutions"] }
 maincourses = {"CSET208":"Ethics for Engineers, Patents, Copyrights and IPR","CSET302":"Automata Theory and Computability",\
     "CSET305":"High Performance Computing","CSET303":"Seminar on Special Topics in Emerging Areas", "CSET304":"Competitive Programming",}
-splelectives = {"Natural Language Processing":"CSET346", }
-electives = {"Soft Computing": "CSET326"}
+splelectives = {"Natural Language Processing":"CSET346", "Blockchain Technologies: Platforms & Applications":"CSET350", "Penetration Testing, Auditing and Ethical Testing": "CSET363", "Time Series Analysis": "CSET369", "Big Data Analytics and Business Intelligence": "CSET371", "Augmented Reality": "CSET337", "Build and Release Management in DevOps": "CSET448", "Front-End Web UI Frameworks and Tools: Bootstrap" : "CSET457", "Cloud Infrastructure and Services": "CSET358", "Quantum Computing for Data Analysis": "CSET474", "IoT Analytics": "CSET480", "Augmented Reality and ARCore":"CSET425", "Design and Manufacturing for Digital Products": "CSET433", "User Centered Design": "CSET321" }
+electives = {"Soft Computing": "CSET326", "Compiler Construction" : "CSET323", "Software Project Management" : "CSET3240", "Engineering Optimization" : "CSET329"}
       
            
 def parse(specialisation,elective, splelec,  wb):
